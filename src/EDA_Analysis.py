@@ -9,7 +9,7 @@ import seaborn as sns
 # -------------------------------
 # Configuration
 # -------------------------------
-DATASET_PATH = r"C:\Users\somavarapu lokesh\PycharmProjects\placement_prediction\dataset\placement_predict_50K_Raw (2).csv"
+DATASET_PATH = r"C:\Users\somavarapu lokesh\PycharmProjects\placement_prediction\uploads\placement_predict_50K_Raw (2) (1).csv"
 OUTPUT_FOLDER = "C:\\Users\\somavarapu lokesh\\PycharmProjects\\placement_prediction\\outputs\\EDA_Analysis"
 
 

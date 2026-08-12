@@ -18,40 +18,78 @@
 
        <div class="card">
            <h3>Total Students</h3>
-           <p>Dataset records will appear here.</p>
+           <p>{{ stats.total_students if stats.total_students is not none else 'Dataset records will appear here.' }}</p>
        </div>
 
 
        <div class="card">
            <h3>Total Features</h3>
-           <p>Number of columns will appear here.</p>
+           <p>{{ stats.total_features if stats.total_features is not none else 'Number of columns will appear here.' }}</p>
        </div>
 
 
        <div class="card">
            <h3>Missing Values</h3>
-           <p>Missing-value count will appear here.</p>
+           <p>{{ stats.missing_values if stats.missing_values is not none else 'Missing-value count will appear here.' }}</p>
        </div>
 
 
        <div class="card">
            <h3>Duplicate Records</h3>
-           <p>Duplicate count will appear here.</p>
+           <p>{{ stats.duplicate_records if stats.duplicate_records is not none else 'Duplicate count will appear here.' }}</p>
        </div>
 
 
    </div>
 
 
+   {% if error %}
+   <p style="color: red;">{{ error }}</p>
+   {% endif %}
+
+
    <h2>Dataset Operations</h2>
 
 
-   <button>Upload Dataset</button>
-   <button>View Dataset</button>
-   <button>Dataset Summary</button>
+   <!-- Upload Dataset -->
+   <form method="POST" enctype="multipart/form-data" style="display:inline;">
+       <input type="hidden" name="action" value="upload">
+       <input type="file" name="dataset_file" accept=".csv" required>
+       <button type="submit">Upload Dataset</button>
+   </form>
+
+
+   <!-- View Dataset -->
+   <form method="POST" style="display:inline;">
+       <input type="hidden" name="action" value="view">
+       <button type="submit">View Dataset</button>
+   </form>
+
+
+   <!-- Dataset Summary -->
+   <form method="POST" style="display:inline;">
+       <input type="hidden" name="action" value="summary">
+       <button type="submit">Dataset Summary</button>
+   </form>
+
+
+   {% if table_html %}
+   <h2>Dataset Preview (first 50 rows)</h2>
+   <div style="overflow-x:auto;">
+       {{ table_html | safe }}
+   </div>
+   {% endif %}
+
+
+   {% if summary_html %}
+   <h2>Dataset Summary</h2>
+   <div style="overflow-x:auto;">
+       {{ summary_html | safe }}
+   </div>
+   {% endif %}
 
 
 </div>
 
 
-{% endblock %
+{% endblock %}

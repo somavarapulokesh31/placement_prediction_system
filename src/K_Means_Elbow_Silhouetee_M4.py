@@ -1,70 +1,43 @@
 # ============================================================
-# PLACEMENT PREDICTION - PREPROCESSED DATASET
-# K-MEANS AND K-MEANS++ CLUSTERING
-#
-# Features:
-#   CGPA
-#   HistoryOfBacklogs
-#   Internships
-#   AptituteTestScore
-#
-# Methods:
-#   1. K-Means
-#   2. K-Means++
-#   3. Elbow Method
-#   4. Silhouette Score
-#   5. PCA visualization
-#
-# IMPORTANT:
-# - Uses the PREPROCESSED dataset
-# - Original dataset is NOT modified
-# - Outputs are stored in separate folders
+# PLACEMENT PREDICTION SYSTEM
+# K-MEANS AND K-MEANS++
+# ELBOW + SILHOUETTE + PCA + ACCURACY
 # ============================================================
-
 
 import os
 import warnings
-
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
-
 from sklearn.metrics import (
-   silhouette_score,
-   calinski_harabasz_score,
-   davies_bouldin_score,
-   accuracy_score
+    silhouette_score,
+    calinski_harabasz_score,
+    davies_bouldin_score,
+    accuracy_score
 )
-
 
 warnings.filterwarnings("ignore")
 
 
-
-
 # ============================================================
-# 1. INPUT FILE
+# 1. INPUT PATH
 # ============================================================
-
 
 INPUT_FILE = (
-   r"C:\Users\somavarapu lokesh\PycharmProjects\placement_prediction\uploads\placement_predict_50K_Raw (2) (1).csv"
+    r"C:\Users\somavarapu lokesh\PycharmProjects\placement_prediction"
+    r"\dataset\final_preprocess_M2.csv"
 )
 
 
-
-
 # ============================================================
-# 2. OUTPUT FOLDER
+# 2. MAIN OUTPUT PATH
 # ============================================================
-
 
 OUTPUT_FOLDER = (
     r"C:\Users\somavarapu lokesh\PycharmProjects\placement_prediction"
@@ -72,1800 +45,1622 @@ OUTPUT_FOLDER = (
 )
 
 
-
-
 # ============================================================
-# 3. CREATE SEPARATE OUTPUT FOLDERS
+# 3. OUTPUT SUB-FOLDERS
 # ============================================================
-
-
-KMEANS_FOLDER = os.path.join(
-   OUTPUT_FOLDER,
-   "KMeans"
-)
-
-
-KMEANS_PP_FOLDER = os.path.join(
-   OUTPUT_FOLDER,
-   "KMeansPlusPlus"
-)
-
-
-ELBOW_FOLDER = os.path.join(
-   OUTPUT_FOLDER,
-   "Elbow"
-)
-
-
-SILHOUETTE_FOLDER = os.path.join(
-   OUTPUT_FOLDER,
-   "Silhouette"
-)
-
 
 ACCURACY_FOLDER = os.path.join(
-   OUTPUT_FOLDER,
-   "Accuracy"
+    OUTPUT_FOLDER, "Accuracy"
+)
+
+CHARTS_FOLDER = os.path.join(
+    OUTPUT_FOLDER, "charts"
+)
+
+CLUSTER_RESULTS_FOLDER = os.path.join(
+    OUTPUT_FOLDER, "cluster_results"
+)
+
+ELBOW_FOLDER = os.path.join(
+    OUTPUT_FOLDER, "Elbow"
+)
+
+KMEANS_FOLDER = os.path.join(
+    OUTPUT_FOLDER, "KMeans"
+)
+
+KMEANS_PP_FOLDER = os.path.join(
+    OUTPUT_FOLDER, "KMeansPlusPlus"
+)
+
+METRICS_FOLDER = os.path.join(
+    OUTPUT_FOLDER, "metrics"
+)
+
+PCA_FOLDER = os.path.join(
+    OUTPUT_FOLDER, "pca"
+)
+
+SILHOUETTE_FOLDER = os.path.join(
+    OUTPUT_FOLDER, "Silhouette"
 )
 
 
+# Create all folders automatically
+ALL_FOLDERS = [
+    OUTPUT_FOLDER,
+    ACCURACY_FOLDER,
+    CHARTS_FOLDER,
+    CLUSTER_RESULTS_FOLDER,
+    ELBOW_FOLDER,
+    KMEANS_FOLDER,
+    KMEANS_PP_FOLDER,
+    METRICS_FOLDER,
+    PCA_FOLDER,
+    SILHOUETTE_FOLDER
+]
 
-
-for folder in [
-   KMEANS_FOLDER,
-   KMEANS_PP_FOLDER,
-   ELBOW_FOLDER,
-   SILHOUETTE_FOLDER,
-   ACCURACY_FOLDER
-]:
-   os.makedirs(folder, exist_ok=True)
-
-
+for folder in ALL_FOLDERS:
+    os.makedirs(folder, exist_ok=True)
 
 
 # ============================================================
-# 4. LOAD PREPROCESSED DATASET
+# 4. PATH CHECK
 # ============================================================
 
-
+print("\n" + "=" * 75)
+print("PATH CHECK")
 print("=" * 75)
+
+print(
+    "Input dataset exists :",
+    os.path.isfile(INPUT_FILE)
+)
+
+print(
+    "Output folder        :",
+    OUTPUT_FOLDER
+)
+
+if not os.path.isfile(INPUT_FILE):
+
+    raise FileNotFoundError(
+        "\nDataset not found at:\n"
+        + INPUT_FILE
+    )
+
+
+# ============================================================
+# 5. LOAD DATASET
+# ============================================================
+
+print("\n" + "=" * 75)
 print("K-MEANS AND K-MEANS++")
 print("PLACEMENT PREDICTION - PREPROCESSED DATASET")
 print("=" * 75)
 
+data = pd.read_csv(
+    INPUT_FILE
+)
 
-if not os.path.exists(INPUT_FILE):
+print(
+    "\nPreprocessed dataset loaded successfully."
+)
 
+print(
+    "Rows    :",
+    data.shape[0]
+)
 
-   raise FileNotFoundError(
-       "\nPreprocessed dataset was not found.\n\n"
-       "Check this path:\n"
-       + INPUT_FILE
-   )
-
-
-
-
-data = pd.read_csv(INPUT_FILE)
-
-
-print("\nPreprocessed dataset loaded successfully.")
-
-
-print("Rows    :", data.shape[0])
-print("Columns :", data.shape[1])
-
-
+print(
+    "Columns :",
+    data.shape[1]
+)
 
 
 # ============================================================
-# 5. DISPLAY COLUMNS
+# 6. DISPLAY COLUMNS
 # ============================================================
-
 
 print("\nAvailable columns:")
 print("-" * 75)
 
-
-for i, column in enumerate(data.columns, 1):
-   print(i, ".", column)
-
-
+for i, column in enumerate(
+    data.columns,
+    1
+):
+    print(
+        i,
+        ".",
+        column
+    )
 
 
 # ============================================================
-# 6. COLUMN-NAME NORMALIZATION
+# 7. NORMALIZE COLUMN NAMES
 # ============================================================
-
 
 def normalize_column_name(column):
 
-
-   return (
-       str(column)
-       .strip()
-       .lower()
-       .replace("_", "")
-       .replace(" ", "")
-       .replace("-", "")
-   )
-
-
+    return (
+        str(column)
+        .strip()
+        .lower()
+        .replace("_", "")
+        .replace(" ", "")
+        .replace("-", "")
+    )
 
 
 normalized_columns = {
-   normalize_column_name(column): column
-   for column in data.columns
+    normalize_column_name(column): column
+    for column in data.columns
 }
 
 
-
-
 # ============================================================
-# 7. REQUIRED FEATURES
+# 8. REQUIRED FEATURES
 # ============================================================
-
 
 required_features = [
-   "CGPA",
-   "HistoryOfBacklogs",
-   "Internships",
-   "AptituteTestScore"
+    "CGPA",
+    "HistoryOfBacklogs",
+    "Internships",
+    "AptitudeTestScore"
 ]
 
 
-
-
 # ============================================================
-# 8. FIND FEATURES
+# 9. FIND REQUIRED FEATURES
 # ============================================================
-
 
 feature_columns = []
 
-
-
-
 for feature in required_features:
 
+    normalized_feature = (
+        normalize_column_name(feature)
+    )
 
-   normalized_feature = normalize_column_name(
-       feature
-   )
+    if normalized_feature in normalized_columns:
 
+        feature_columns.append(
+            normalized_columns[
+                normalized_feature
+            ]
+        )
 
-   if normalized_feature in normalized_columns:
+    else:
 
-
-       feature_columns.append(
-           normalized_columns[
-               normalized_feature
-           ]
-       )
-
-
-   else:
-
-
-       # Handle Aptitude spelling variations
-       if feature == "AptituteTestScore":
-
-
-           alternatives = [
-               "AptitudeTestScore",
-               "Aptitude_Test_Score",
-               "AptitudeScore",
-               "AptituteScore"
-           ]
-
-
-           found = None
-
-
-           for alternative in alternatives:
-
-
-               normalized_alt = normalize_column_name(
-                   alternative
-               )
-
-
-               if normalized_alt in normalized_columns:
-
-
-                   found = normalized_columns[
-                       normalized_alt
-                   ]
-
-
-                   break
-
-
-           if found is not None:
-
-
-               feature_columns.append(found)
-
-
-           else:
-
-
-               raise ValueError(
-                   "\nAptitude Test Score column was not found."
-                   "\n\nAvailable columns:\n"
-                   + "\n".join(
-                       data.columns.astype(str)
-                   )
-               )
-
-
-       else:
-
-
-           raise ValueError(
-               f"\nRequired column '{feature}' "
-               "was not found."
-           )
-
-
+        raise ValueError(
+            "\nRequired feature not found: "
+            + feature
+        )
 
 
 # ============================================================
-# 9. DISPLAY SELECTED FEATURES
+# 10. DISPLAY FEATURES
 # ============================================================
-
 
 print("\n" + "=" * 75)
 print("FEATURES USED FOR CLUSTERING")
 print("=" * 75)
 
-
 for feature in feature_columns:
 
-
-   print("✓", feature)
-
-
+    print(
+        "✓",
+        feature
+    )
 
 
 # ============================================================
-# 10. SELECT FOUR FEATURES
+# 11. SELECT FEATURES
 # ============================================================
-
 
 X = data[
-   feature_columns
+    feature_columns
 ].copy()
 
 
-
-
 # ============================================================
-# 11. CONVERT TO NUMERIC
+# 12. CONVERT FEATURES TO NUMERIC
 # ============================================================
-
 
 for column in feature_columns:
 
-
-   X[column] = pd.to_numeric(
-       X[column],
-       errors="coerce"
-   )
-
-
+    X[column] = pd.to_numeric(
+        X[column],
+        errors="coerce"
+    )
 
 
 # ============================================================
-# 12. HANDLE INFINITE VALUES
+# 13. HANDLE INFINITE VALUES
 # ============================================================
-
 
 X = X.replace(
-   [np.inf, -np.inf],
-   np.nan
+    [np.inf, -np.inf],
+    np.nan
 )
 
 
-
-
 # ============================================================
-# 13. HANDLE MISSING VALUES
+# 14. CHECK MISSING VALUES
 # ============================================================
 
-
-print("\nMissing values:")
-
+print("\nMissing values before filling:")
 
 print(
-   X.isnull().sum()
+    X.isnull().sum()
 )
 
 
-
+# ============================================================
+# 15. FILL MISSING VALUES WITH MEDIAN
+# ============================================================
 
 for column in feature_columns:
 
-
-   X[column] = X[column].fillna(
-       X[column].median()
-   )
-
-
-
-
-print("\nMissing values after preprocessing:")
+    X[column] = X[column].fillna(
+        X[column].median()
+    )
 
 
 print(
-   X.isnull().sum()
+    "\nMissing values after filling:"
+)
+
+print(
+    X.isnull().sum()
 )
 
 
-
-
 # ============================================================
-# 14. STANDARDISATION
+# 16. STANDARDIZATION
 # ============================================================
-#
-# Even though this is a preprocessed dataset, K-Means is
-# distance-based. Therefore, the four clustering variables
-# are standardised before clustering.
-# ============================================================
-
 
 scaler = StandardScaler()
 
-
 X_scaled = scaler.fit_transform(
-   X
+    X
+)
+
+print(
+    "\nFeature standardisation completed."
 )
 
 
-
-
-print("\nFeature standardisation completed.")
-
-
-
-
 # ============================================================
-# 15. K RANGE
+# 17. K VALUES
 # ============================================================
-
 
 K_VALUES = range(
-   2,
-   11
+    2,
+    11
 )
 
 
-
-
 # ============================================================
-# 16. K-MEANS - ELBOW AND SILHOUETTE
+# 18. K-MEANS ANALYSIS
 # ============================================================
-
 
 print("\n" + "=" * 75)
 print("K-MEANS ANALYSIS")
 print("=" * 75)
 
-
 kmeans_inertia = []
+
 kmeans_silhouette = []
-
-
-
 
 for k in K_VALUES:
 
+    model = KMeans(
+        n_clusters=k,
+        init="random",
+        n_init=10,
+        random_state=42
+    )
 
-   model = KMeans(
-       n_clusters=k,
-       init="random",
-       n_init=10,
-       random_state=42
-   )
+    labels = model.fit_predict(
+        X_scaled
+    )
 
+    inertia = model.inertia_
 
-   labels = model.fit_predict(
-       X_scaled
-   )
+    silhouette = silhouette_score(
+        X_scaled,
+        labels
+    )
 
+    kmeans_inertia.append(
+        inertia
+    )
 
-   inertia = model.inertia_
+    kmeans_silhouette.append(
+        silhouette
+    )
 
-
-   silhouette = silhouette_score(
-       X_scaled,
-       labels
-   )
-
-
-   kmeans_inertia.append(
-       inertia
-   )
-
-
-   kmeans_silhouette.append(
-       silhouette
-   )
-
-
-   print(
-       f"K = {k:2d} | "
-       f"Inertia = {inertia:.4f} | "
-       f"Silhouette = {silhouette:.4f}"
-   )
-
-
+    print(
+        f"K = {k:2d} | "
+        f"Inertia = {inertia:.4f} | "
+        f"Silhouette = {silhouette:.4f}"
+    )
 
 
 # ============================================================
-# 17. K-MEANS++ - ELBOW AND SILHOUETTE
+# 19. K-MEANS++ ANALYSIS
 # ============================================================
-
 
 print("\n" + "=" * 75)
 print("K-MEANS++ ANALYSIS")
 print("=" * 75)
 
-
 kmeans_pp_inertia = []
+
 kmeans_pp_silhouette = []
-
-
-
 
 for k in K_VALUES:
 
+    model = KMeans(
+        n_clusters=k,
+        init="k-means++",
+        n_init=10,
+        random_state=42
+    )
 
-   model = KMeans(
-       n_clusters=k,
-       init="k-means++",
-       n_init=10,
-       random_state=42
-   )
+    labels = model.fit_predict(
+        X_scaled
+    )
 
+    inertia = model.inertia_
 
-   labels = model.fit_predict(
-       X_scaled
-   )
+    silhouette = silhouette_score(
+        X_scaled,
+        labels
+    )
 
+    kmeans_pp_inertia.append(
+        inertia
+    )
 
-   inertia = model.inertia_
+    kmeans_pp_silhouette.append(
+        silhouette
+    )
 
-
-   silhouette = silhouette_score(
-       X_scaled,
-       labels
-   )
-
-
-   kmeans_pp_inertia.append(
-       inertia
-   )
-
-
-   kmeans_pp_silhouette.append(
-       silhouette
-   )
-
-
-   print(
-       f"K = {k:2d} | "
-       f"Inertia = {inertia:.4f} | "
-       f"Silhouette = {silhouette:.4f}"
-   )
-
-
+    print(
+        f"K = {k:2d} | "
+        f"Inertia = {inertia:.4f} | "
+        f"Silhouette = {silhouette:.4f}"
+    )
 
 
 # ============================================================
-# 18. SELECT BEST K
-# ============================================================
-#
-# Maximum Silhouette Score is used to select K automatically.
-# The Elbow graph should also be inspected.
+# 20. BEST K
 # ============================================================
 
+k_values_list = list(
+    K_VALUES
+)
 
-best_k_kmeans = list(K_VALUES)[
-   np.argmax(
-       kmeans_silhouette
-   )
+best_k_kmeans = k_values_list[
+    int(
+        np.argmax(
+            kmeans_silhouette
+        )
+    )
 ]
 
-
-
-
-best_k_kmeans_pp = list(K_VALUES)[
-   np.argmax(
-       kmeans_pp_silhouette
-   )
+best_k_kmeans_pp = k_values_list[
+    int(
+        np.argmax(
+            kmeans_pp_silhouette
+        )
+    )
 ]
-
-
-
 
 print("\n" + "=" * 75)
 print("SELECTED NUMBER OF CLUSTERS")
 print("=" * 75)
 
+print(
+    "K-Means best K   :",
+    best_k_kmeans
+)
 
 print(
-   "K-Means best K       :",
-   best_k_kmeans
+    "K-Means++ best K :",
+    best_k_kmeans_pp
 )
 
 
-print(
-   "K-Means++ best K     :",
-   best_k_kmeans_pp
-)
-
-
-
-
 # ============================================================
-# 19. ELBOW GRAPH - K-MEANS
+# 21. ELBOW - K-MEANS
 # ============================================================
-
 
 plt.figure(
-   figsize=(10, 6)
+    figsize=(10, 6)
 )
-
 
 plt.plot(
-   list(K_VALUES),
-   kmeans_inertia,
-   marker="o"
+    k_values_list,
+    kmeans_inertia,
+    marker="o"
 )
-
 
 plt.xlabel(
-   "Number of Clusters (K)"
+    "Number of Clusters (K)"
 )
-
 
 plt.ylabel(
-   "Inertia"
+    "Inertia"
 )
-
 
 plt.title(
-   "Elbow Method - K-Means"
+    "Elbow Method - K-Means"
 )
-
 
 plt.xticks(
-   list(K_VALUES)
+    k_values_list
 )
 
-
-plt.grid(True)
-
+plt.grid(
+    True
+)
 
 plt.tight_layout()
 
-
 plt.savefig(
-   os.path.join(
-       ELBOW_FOLDER,
-       "elbow_kmeans.png"
-   ),
-   dpi=300,
-   bbox_inches="tight"
+    os.path.join(
+        ELBOW_FOLDER,
+        "elbow_kmeans.png"
+    ),
+    dpi=300,
+    bbox_inches="tight"
 )
-
 
 plt.close()
 
 
-
-
 # ============================================================
-# 20. ELBOW GRAPH - K-MEANS++
+# 22. ELBOW - K-MEANS++
 # ============================================================
-
 
 plt.figure(
-   figsize=(10, 6)
+    figsize=(10, 6)
 )
-
 
 plt.plot(
-   list(K_VALUES),
-   kmeans_pp_inertia,
-   marker="o"
+    k_values_list,
+    kmeans_pp_inertia,
+    marker="o"
 )
-
 
 plt.xlabel(
-   "Number of Clusters (K)"
+    "Number of Clusters (K)"
 )
-
 
 plt.ylabel(
-   "Inertia"
+    "Inertia"
 )
-
 
 plt.title(
-   "Elbow Method - K-Means++"
+    "Elbow Method - K-Means++"
 )
-
 
 plt.xticks(
-   list(K_VALUES)
+    k_values_list
 )
 
-
-plt.grid(True)
-
+plt.grid(
+    True
+)
 
 plt.tight_layout()
 
-
 plt.savefig(
-   os.path.join(
-       ELBOW_FOLDER,
-       "elbow_kmeans_plus_plus.png"
-   ),
-   dpi=300,
-   bbox_inches="tight"
+    os.path.join(
+        ELBOW_FOLDER,
+        "elbow_kmeans_plus_plus.png"
+    ),
+    dpi=300,
+    bbox_inches="tight"
 )
-
 
 plt.close()
 
 
-
-
 # ============================================================
-# 21. SILHOUETTE GRAPH - K-MEANS
+# 23. SILHOUETTE - K-MEANS
 # ============================================================
-
 
 plt.figure(
-   figsize=(10, 6)
+    figsize=(10, 6)
 )
-
 
 plt.plot(
-   list(K_VALUES),
-   kmeans_silhouette,
-   marker="o"
+    k_values_list,
+    kmeans_silhouette,
+    marker="o"
 )
-
 
 plt.xlabel(
-   "Number of Clusters (K)"
+    "Number of Clusters (K)"
 )
-
 
 plt.ylabel(
-   "Silhouette Score"
+    "Silhouette Score"
 )
-
 
 plt.title(
-   "Silhouette Score - K-Means"
+    "Silhouette Score - K-Means"
 )
-
 
 plt.xticks(
-   list(K_VALUES)
+    k_values_list
 )
 
-
-plt.grid(True)
-
+plt.grid(
+    True
+)
 
 plt.tight_layout()
 
-
 plt.savefig(
-   os.path.join(
-       SILHOUETTE_FOLDER,
-       "silhouette_kmeans.png"
-   ),
-   dpi=300,
-   bbox_inches="tight"
+    os.path.join(
+        SILHOUETTE_FOLDER,
+        "silhouette_kmeans.png"
+    ),
+    dpi=300,
+    bbox_inches="tight"
 )
-
 
 plt.close()
 
 
-
-
 # ============================================================
-# 22. SILHOUETTE GRAPH - K-MEANS++
+# 24. SILHOUETTE - K-MEANS++
 # ============================================================
-
 
 plt.figure(
-   figsize=(10, 6)
+    figsize=(10, 6)
 )
-
 
 plt.plot(
-   list(K_VALUES),
-   kmeans_pp_silhouette,
-   marker="o"
+    k_values_list,
+    kmeans_pp_silhouette,
+    marker="o"
 )
-
 
 plt.xlabel(
-   "Number of Clusters (K)"
+    "Number of Clusters (K)"
 )
-
 
 plt.ylabel(
-   "Silhouette Score"
+    "Silhouette Score"
 )
-
 
 plt.title(
-   "Silhouette Score - K-Means++"
+    "Silhouette Score - K-Means++"
 )
-
 
 plt.xticks(
-   list(K_VALUES)
+    k_values_list
 )
 
-
-plt.grid(True)
-
+plt.grid(
+    True
+)
 
 plt.tight_layout()
 
-
 plt.savefig(
-   os.path.join(
-       SILHOUETTE_FOLDER,
-       "silhouette_kmeans_plus_plus.png"
-   ),
-   dpi=300,
-   bbox_inches="tight"
+    os.path.join(
+        SILHOUETTE_FOLDER,
+        "silhouette_kmeans_plus_plus.png"
+    ),
+    dpi=300,
+    bbox_inches="tight"
 )
-
 
 plt.close()
 
 
-
-
 # ============================================================
-# 23. FINAL K-MEANS
+# 25. FINAL K-MEANS MODEL
 # ============================================================
-
 
 kmeans_model = KMeans(
-   n_clusters=best_k_kmeans,
-   init="random",
-   n_init=10,
-   random_state=42
+    n_clusters=best_k_kmeans,
+    init="random",
+    n_init=10,
+    random_state=42
 )
-
 
 kmeans_labels = kmeans_model.fit_predict(
-   X_scaled
+    X_scaled
 )
 
 
-
-
 # ============================================================
-# 24. FINAL K-MEANS++
+# 26. FINAL K-MEANS++ MODEL
 # ============================================================
-
 
 kmeans_pp_model = KMeans(
-   n_clusters=best_k_kmeans_pp,
-   init="k-means++",
-   n_init=10,
-   random_state=42
+    n_clusters=best_k_kmeans_pp,
+    init="k-means++",
+    n_init=10,
+    random_state=42
 )
-
 
 kmeans_pp_labels = kmeans_pp_model.fit_predict(
-   X_scaled
+    X_scaled
 )
 
 
-
-
 # ============================================================
-# 25. SAVE K-MEANS CLUSTERED DATA
+# 27. CLUSTER RESULT DATA
 # ============================================================
-
 
 kmeans_result = X.copy()
 
-
 kmeans_result[
-   "KMeans_Cluster"
+    "KMeans_Cluster"
 ] = kmeans_labels + 1
-
-
-
-
-kmeans_result.to_csv(
-   os.path.join(
-       KMEANS_FOLDER,
-       "kmeans_clustered_data.csv"
-   ),
-   index=False
-)
-
-
-
-
-# ============================================================
-# 26. SAVE K-MEANS++ CLUSTERED DATA
-# ============================================================
 
 
 kmeans_pp_result = X.copy()
 
-
 kmeans_pp_result[
-   "KMeansPlusPlus_Cluster"
+    "KMeansPlusPlus_Cluster"
 ] = kmeans_pp_labels + 1
 
 
+# ============================================================
+# 28. SAVE CLUSTER RESULTS
+# ============================================================
 
+kmeans_result.to_csv(
+    os.path.join(
+        KMEANS_FOLDER,
+        "kmeans_clustered_data.csv"
+    ),
+    index=False
+)
 
 kmeans_pp_result.to_csv(
-   os.path.join(
-       KMEANS_PP_FOLDER,
-       "kmeans_plus_plus_clustered_data.csv"
-   ),
-   index=False
+    os.path.join(
+        KMEANS_PP_FOLDER,
+        "kmeans_plus_plus_clustered_data.csv"
+    ),
+    index=False
+)
+
+kmeans_result.to_csv(
+    os.path.join(
+        CLUSTER_RESULTS_FOLDER,
+        "kmeans_clustered_data.csv"
+    ),
+    index=False
+)
+
+kmeans_pp_result.to_csv(
+    os.path.join(
+        CLUSTER_RESULTS_FOLDER,
+        "kmeans_plus_plus_clustered_data.csv"
+    ),
+    index=False
 )
 
 
+# ============================================================
+# 29. CLUSTER COUNTS
+# ============================================================
+
+kmeans_counts = (
+    pd.Series(
+        kmeans_labels + 1
+    )
+    .value_counts()
+    .sort_index()
+)
+
+kmeans_pp_counts = (
+    pd.Series(
+        kmeans_pp_labels + 1
+    )
+    .value_counts()
+    .sort_index()
+)
+
+cluster_numbers = list(
+    range(
+        1,
+        max(
+            best_k_kmeans,
+            best_k_kmeans_pp
+        ) + 1
+    )
+)
+
+cluster_counts = pd.DataFrame({
+    "Cluster": cluster_numbers
+})
+
+cluster_counts[
+    "KMeans_Count"
+] = (
+    cluster_counts["Cluster"]
+    .map(kmeans_counts)
+    .fillna(0)
+    .astype(int)
+)
+
+cluster_counts[
+    "KMeansPlusPlus_Count"
+] = (
+    cluster_counts["Cluster"]
+    .map(kmeans_pp_counts)
+    .fillna(0)
+    .astype(int)
+)
+
+cluster_counts.to_csv(
+    os.path.join(
+        CLUSTER_RESULTS_FOLDER,
+        "cluster_counts.csv"
+    ),
+    index=False
+)
 
 
 # ============================================================
-# 27. FINAL METRICS - K-MEANS
+# 30. FINAL K-MEANS METRICS
 # ============================================================
-
 
 km_silhouette = silhouette_score(
-   X_scaled,
-   kmeans_labels
+    X_scaled,
+    kmeans_labels
 )
-
 
 km_calinski = calinski_harabasz_score(
-   X_scaled,
-   kmeans_labels
+    X_scaled,
+    kmeans_labels
 )
-
 
 km_davies = davies_bouldin_score(
-   X_scaled,
-   kmeans_labels
+    X_scaled,
+    kmeans_labels
 )
 
 
-
-
 # ============================================================
-# 28. FINAL METRICS - K-MEANS++
+# 31. FINAL K-MEANS++ METRICS
 # ============================================================
-
 
 pp_silhouette = silhouette_score(
-   X_scaled,
-   kmeans_pp_labels
+    X_scaled,
+    kmeans_pp_labels
 )
-
 
 pp_calinski = calinski_harabasz_score(
-   X_scaled,
-   kmeans_pp_labels
+    X_scaled,
+    kmeans_pp_labels
 )
-
 
 pp_davies = davies_bouldin_score(
-   X_scaled,
-   kmeans_pp_labels
+    X_scaled,
+    kmeans_pp_labels
 )
 
 
-
-
 # ============================================================
-# 29. SAVE K-MEANS METRICS
+# 32. SAVE K-MEANS METRICS
 # ============================================================
-
 
 kmeans_metrics = pd.DataFrame({
-
-
-   "Method": ["K-Means"],
-
-
-   "Number_of_Clusters": [
-       best_k_kmeans
-   ],
-
-
-   "Inertia": [
-       kmeans_model.inertia_
-   ],
-
-
-   "Silhouette_Score": [
-       km_silhouette
-   ],
-
-
-   "Calinski_Harabasz_Score": [
-       km_calinski
-   ],
-
-
-   "Davies_Bouldin_Score": [
-       km_davies
-   ]
-
-
+    "Method": [
+        "K-Means"
+    ],
+    "Number_of_Clusters": [
+        best_k_kmeans
+    ],
+    "Inertia": [
+        kmeans_model.inertia_
+    ],
+    "Silhouette_Score": [
+        km_silhouette
+    ],
+    "Calinski_Harabasz_Score": [
+        km_calinski
+    ],
+    "Davies_Bouldin_Score": [
+        km_davies
+    ]
 })
-
-
-
 
 kmeans_metrics.to_csv(
-   os.path.join(
-       KMEANS_FOLDER,
-       "kmeans_metrics.csv"
-   ),
-   index=False
+    os.path.join(
+        KMEANS_FOLDER,
+        "kmeans_metrics.csv"
+    ),
+    index=False
 )
 
 
-
-
 # ============================================================
-# 30. SAVE K-MEANS++ METRICS
+# 33. SAVE K-MEANS++ METRICS
 # ============================================================
-
 
 kmeans_pp_metrics = pd.DataFrame({
-
-
-   "Method": ["K-Means++"],
-
-
-   "Number_of_Clusters": [
-       best_k_kmeans_pp
-   ],
-
-
-   "Inertia": [
-       kmeans_pp_model.inertia_
-   ],
-
-
-   "Silhouette_Score": [
-       pp_silhouette
-   ],
-
-
-   "Calinski_Harabasz_Score": [
-       pp_calinski
-   ],
-
-
-   "Davies_Bouldin_Score": [
-       pp_davies
-   ]
-
-
+    "Method": [
+        "K-Means++"
+    ],
+    "Number_of_Clusters": [
+        best_k_kmeans_pp
+    ],
+    "Inertia": [
+        kmeans_pp_model.inertia_
+    ],
+    "Silhouette_Score": [
+        pp_silhouette
+    ],
+    "Calinski_Harabasz_Score": [
+        pp_calinski
+    ],
+    "Davies_Bouldin_Score": [
+        pp_davies
+    ]
 })
 
-
-
-
 kmeans_pp_metrics.to_csv(
-   os.path.join(
-       KMEANS_PP_FOLDER,
-       "kmeans_plus_plus_metrics.csv"
-   ),
-   index=False
+    os.path.join(
+        KMEANS_PP_FOLDER,
+        "kmeans_plus_plus_metrics.csv"
+    ),
+    index=False
 )
 
 
+# ============================================================
+# 34. COMBINED METRICS
+# ============================================================
+
+metrics_comparison = pd.DataFrame({
+    "Method": [
+        "K-Means",
+        "K-Means++"
+    ],
+    "Best_K": [
+        best_k_kmeans,
+        best_k_kmeans_pp
+    ],
+    "Inertia": [
+        kmeans_model.inertia_,
+        kmeans_pp_model.inertia_
+    ],
+    "Silhouette_Score": [
+        km_silhouette,
+        pp_silhouette
+    ],
+    "Calinski_Harabasz_Score": [
+        km_calinski,
+        pp_calinski
+    ],
+    "Davies_Bouldin_Score": [
+        km_davies,
+        pp_davies
+    ]
+})
+
+metrics_comparison.to_csv(
+    os.path.join(
+        METRICS_FOLDER,
+        "clustering_metrics_comparison.csv"
+    ),
+    index=False
+)
 
 
 # ============================================================
-# 31. 3-D K-MEANS CLUSTERING GRAPH
+# 35. 3-D K-MEANS GRAPH
 # ============================================================
-#
-# Four features cannot be directly plotted in a normal 3-D
-# graph. The first three features are shown here.
-#
-# All FOUR features are used for actual clustering.
-# ============================================================
-
 
 fig = plt.figure(
-   figsize=(11, 8)
+    figsize=(11, 8)
 )
-
 
 ax = fig.add_subplot(
-   111,
-   projection="3d"
+    111,
+    projection="3d"
 )
-
-
-
 
 scatter = ax.scatter(
-   X[feature_columns[0]],
-   X[feature_columns[1]],
-   X[feature_columns[2]],
-   c=kmeans_labels,
-   s=20,
-   alpha=0.7
+    X[feature_columns[0]],
+    X[feature_columns[1]],
+    X[feature_columns[2]],
+    c=kmeans_labels,
+    s=20,
+    alpha=0.7
 )
-
-
-
 
 ax.set_xlabel(
-   feature_columns[0]
+    feature_columns[0]
 )
-
 
 ax.set_ylabel(
-   feature_columns[1]
+    feature_columns[1]
 )
-
 
 ax.set_zlabel(
-   feature_columns[2]
+    feature_columns[2]
 )
-
 
 ax.set_title(
-   "K-Means Clustering"
+    "K-Means Clustering"
 )
-
-
-
 
 fig.colorbar(
-   scatter,
-   ax=ax,
-   label="Cluster"
+    scatter,
+    ax=ax,
+    label="Cluster"
 )
-
-
-
 
 plt.tight_layout()
 
-
 plt.savefig(
-   os.path.join(
-       KMEANS_FOLDER,
-       "kmeans_3D_clustering.png"
-   ),
-   dpi=300,
-   bbox_inches="tight"
+    os.path.join(
+        CHARTS_FOLDER,
+        "kmeans_3D_clustering.png"
+    ),
+    dpi=300,
+    bbox_inches="tight"
 )
-
 
 plt.close()
 
 
-
-
 # ============================================================
-# 32. 3-D K-MEANS++ CLUSTERING GRAPH
+# 36. 3-D K-MEANS++ GRAPH
 # ============================================================
-
 
 fig = plt.figure(
-   figsize=(11, 8)
+    figsize=(11, 8)
 )
-
 
 ax = fig.add_subplot(
-   111,
-   projection="3d"
+    111,
+    projection="3d"
 )
-
-
-
 
 scatter = ax.scatter(
-   X[feature_columns[0]],
-   X[feature_columns[1]],
-   X[feature_columns[2]],
-   c=kmeans_pp_labels,
-   s=20,
-   alpha=0.7
+    X[feature_columns[0]],
+    X[feature_columns[1]],
+    X[feature_columns[2]],
+    c=kmeans_pp_labels,
+    s=20,
+    alpha=0.7
 )
-
-
-
 
 ax.set_xlabel(
-   feature_columns[0]
+    feature_columns[0]
 )
-
 
 ax.set_ylabel(
-   feature_columns[1]
+    feature_columns[1]
 )
-
 
 ax.set_zlabel(
-   feature_columns[2]
+    feature_columns[2]
 )
-
 
 ax.set_title(
-   "K-Means++ Clustering"
+    "K-Means++ Clustering"
 )
-
-
-
 
 fig.colorbar(
-   scatter,
-   ax=ax,
-   label="Cluster"
+    scatter,
+    ax=ax,
+    label="Cluster"
 )
-
-
-
 
 plt.tight_layout()
 
-
 plt.savefig(
-   os.path.join(
-       KMEANS_PP_FOLDER,
-       "kmeans_plus_plus_3D_clustering.png"
-   ),
-   dpi=300,
-   bbox_inches="tight"
+    os.path.join(
+        CHARTS_FOLDER,
+        "kmeans_plus_plus_3D_clustering.png"
+    ),
+    dpi=300,
+    bbox_inches="tight"
 )
-
 
 plt.close()
 
 
-
-
 # ============================================================
-# 33. PCA 2-D VISUALISATION
+# 37. PCA
 # ============================================================
-#
-# PCA is ONLY used here to visualize the four-dimensional
-# clustering results in two dimensions.
-#
-# PCA is NOT used to perform the clustering.
-# ============================================================
-
 
 pca = PCA(
-   n_components=2
+    n_components=2
 )
-
 
 X_pca = pca.fit_transform(
-   X_scaled
+    X_scaled
 )
 
 
-
-
 # ============================================================
-# 34. K-MEANS PCA GRAPH
+# 38. K-MEANS PCA GRAPH
 # ============================================================
-
 
 plt.figure(
-   figsize=(10, 7)
+    figsize=(10, 7)
 )
-
 
 scatter = plt.scatter(
-   X_pca[:, 0],
-   X_pca[:, 1],
-   c=kmeans_labels,
-   s=20,
-   alpha=0.7
+    X_pca[:, 0],
+    X_pca[:, 1],
+    c=kmeans_labels,
+    s=20,
+    alpha=0.7
 )
-
 
 plt.xlabel(
-   "Principal Component 1"
+    "Principal Component 1"
 )
-
 
 plt.ylabel(
-   "Principal Component 2"
+    "Principal Component 2"
 )
-
 
 plt.title(
-   "K-Means Clusters - PCA Visualization"
+    "K-Means Clusters - PCA Visualization"
 )
-
 
 plt.colorbar(
-   scatter,
-   label="Cluster"
+    scatter,
+    label="Cluster"
 )
 
-
-plt.grid(True)
-
+plt.grid(
+    True
+)
 
 plt.tight_layout()
 
-
 plt.savefig(
-   os.path.join(
-       KMEANS_FOLDER,
-       "kmeans_PCA_clustering.png"
-   ),
-   dpi=300,
-   bbox_inches="tight"
+    os.path.join(
+        PCA_FOLDER,
+        "kmeans_PCA_clustering.png"
+    ),
+    dpi=300,
+    bbox_inches="tight"
 )
-
 
 plt.close()
 
 
-
-
 # ============================================================
-# 35. K-MEANS++ PCA GRAPH
+# 39. K-MEANS++ PCA GRAPH
 # ============================================================
-
 
 plt.figure(
-   figsize=(10, 7)
+    figsize=(10, 7)
 )
-
 
 scatter = plt.scatter(
-   X_pca[:, 0],
-   X_pca[:, 1],
-   c=kmeans_pp_labels,
-   s=20,
-   alpha=0.7
+    X_pca[:, 0],
+    X_pca[:, 1],
+    c=kmeans_pp_labels,
+    s=20,
+    alpha=0.7
 )
-
 
 plt.xlabel(
-   "Principal Component 1"
+    "Principal Component 1"
 )
-
 
 plt.ylabel(
-   "Principal Component 2"
+    "Principal Component 2"
 )
-
 
 plt.title(
-   "K-Means++ Clusters - PCA Visualization"
+    "K-Means++ Clusters - PCA Visualization"
 )
-
 
 plt.colorbar(
-   scatter,
-   label="Cluster"
+    scatter,
+    label="Cluster"
 )
 
-
-plt.grid(True)
-
+plt.grid(
+    True
+)
 
 plt.tight_layout()
 
-
 plt.savefig(
-   os.path.join(
-       KMEANS_PP_FOLDER,
-       "kmeans_plus_plus_PCA_clustering.png"
-   ),
-   dpi=300,
-   bbox_inches="tight"
+    os.path.join(
+        PCA_FOLDER,
+        "kmeans_plus_plus_PCA_clustering.png"
+    ),
+    dpi=300,
+    bbox_inches="tight"
 )
-
 
 plt.close()
 
 
+# ============================================================
+# 40. FIND PLACEMENT TARGET
+# ============================================================
+
+target_candidates = [
+    "PlacementStatus",
+    "Placement",
+    "Placed",
+    "Status",
+    "Target"
+]
+
+target_column = None
+
+for candidate in target_candidates:
+
+    normalized_candidate = (
+        normalize_column_name(
+            candidate
+        )
+    )
+
+    if normalized_candidate in normalized_columns:
+
+        target_column = normalized_columns[
+            normalized_candidate
+        ]
+
+        break
 
 
 # ============================================================
-# 36. CLUSTER COUNTS
+# 41. ROBUST CLUSTER MATCHING ACCURACY
 # ============================================================
 
+def cluster_matching_accuracy(
+    true_values,
+    cluster_values
+):
+
+    true_values = pd.Series(
+        true_values
+    ).reset_index(drop=True)
+
+    cluster_values = pd.Series(
+        cluster_values
+    ).reset_index(drop=True)
+
+    if len(true_values) != len(
+        cluster_values
+    ):
+
+        raise ValueError(
+            "Target values and cluster "
+            "values have different lengths."
+        )
+
+    # Convert both values to strings so sklearn
+    # receives one consistent target type.
+    true_values = (
+        true_values
+        .astype("string")
+        .fillna("MISSING")
+        .str.strip()
+    )
+
+    predicted_values = pd.Series(
+        index=range(
+            len(cluster_values)
+        ),
+        dtype="string"
+    )
+
+    for cluster in sorted(
+        cluster_values.dropna().unique()
+    ):
+
+        indexes = np.where(
+            cluster_values.to_numpy()
+            == cluster
+        )[0]
+
+        cluster_targets = (
+            true_values.iloc[
+                indexes
+            ]
+        )
+
+        majority = cluster_targets.mode(
+            dropna=False
+        )
+
+        if not majority.empty:
+
+            predicted_values.iloc[
+                indexes
+            ] = str(
+                majority.iloc[0]
+            )
+
+    predicted_values = (
+        predicted_values
+        .fillna("UNKNOWN")
+        .astype("string")
+    )
+
+    true_array = (
+        true_values.to_numpy(
+            dtype=str
+        )
+    )
+
+    predicted_array = (
+        predicted_values.to_numpy(
+            dtype=str
+        )
+    )
+
+    return accuracy_score(
+        true_array,
+        predicted_array
+    )
+
+
+# ============================================================
+# 42. CALCULATE ACCURACY
+# ============================================================
+
+print("\n" + "=" * 75)
+print("PLACEMENT CLUSTER MATCHING ACCURACY")
+print("=" * 75)
+
+if target_column is not None:
+
+    print(
+        "Target column:",
+        target_column
+    )
+
+    target = data[
+        target_column
+    ].copy()
+
+    valid = target.notna()
+
+    target_valid = (
+        target[
+            valid
+        ]
+        .reset_index(drop=True)
+    )
+
+    km_labels_valid = (
+        pd.Series(
+            kmeans_labels,
+            index=data.index
+        )[valid]
+        .reset_index(drop=True)
+    )
+
+    pp_labels_valid = (
+        pd.Series(
+            kmeans_pp_labels,
+            index=data.index
+        )[valid]
+        .reset_index(drop=True)
+    )
+
+    print(
+        "Target data type:",
+        target_valid.dtype
+    )
+
+    print(
+        "Target unique values:",
+        target_valid.unique()
+    )
+
+    km_accuracy = (
+        cluster_matching_accuracy(
+            target_valid,
+            km_labels_valid
+        )
+    )
+
+    pp_accuracy = (
+        cluster_matching_accuracy(
+            target_valid,
+            pp_labels_valid
+        )
+    )
+
+    print(
+        f"K-Means   : "
+        f"{km_accuracy * 100:.2f}%"
+    )
+
+    print(
+        f"K-Means++ : "
+        f"{pp_accuracy * 100:.2f}%"
+    )
+
+    accuracy_result = pd.DataFrame({
+
+        "Method": [
+            "K-Means",
+            "K-Means++"
+        ],
+
+        "Cluster_Matching_Accuracy": [
+            km_accuracy,
+            pp_accuracy
+        ],
+
+        "Accuracy_Percentage": [
+            km_accuracy * 100,
+            pp_accuracy * 100
+        ]
+
+    })
+
+    accuracy_result.to_csv(
+        os.path.join(
+            ACCURACY_FOLDER,
+            "placement_cluster_matching_accuracy.csv"
+        ),
+        index=False
+    )
+
+else:
+
+    print(
+        "\nNo PlacementStatus/Placement/"
+        "Placed/Status/Target column was found."
+    )
+
+    print(
+        "Accuracy was not calculated."
+    )
+
+
+# ============================================================
+# 43. CLUSTER COUNTS
+# ============================================================
 
 print("\n" + "=" * 75)
 print("K-MEANS CLUSTER COUNTS")
 print("=" * 75)
 
-
 print(
-   kmeans_result[
-       "KMeans_Cluster"
-   ].value_counts().sort_index()
+    kmeans_result[
+        "KMeans_Cluster"
+    ]
+    .value_counts()
+    .sort_index()
 )
-
-
 
 
 print("\n" + "=" * 75)
 print("K-MEANS++ CLUSTER COUNTS")
 print("=" * 75)
 
-
 print(
-   kmeans_pp_result[
-       "KMeansPlusPlus_Cluster"
-   ].value_counts().sort_index()
+    kmeans_pp_result[
+        "KMeansPlusPlus_Cluster"
+    ]
+    .value_counts()
+    .sort_index()
 )
 
 
-
-
 # ============================================================
-# 37. FIND PLACEMENT TARGET
+# 44. FINAL RESULTS
 # ============================================================
-
-
-target_candidates = [
-   "Placement",
-   "Placed",
-   "Status",
-   "Target"
-]
-
-
-
-
-target_column = None
-
-
-
-
-for candidate in target_candidates:
-
-
-   normalized_candidate = normalize_column_name(
-       candidate
-   )
-
-
-   if normalized_candidate in normalized_columns:
-
-
-       target_column = normalized_columns[
-           normalized_candidate
-       ]
-
-
-       break
-
-
-
-
-# ============================================================
-# 38. CLUSTER MATCHING ACCURACY
-# ============================================================
-
-
-def cluster_matching_accuracy(
-       true_values,
-       cluster_values
-):
-
-
-   true_values = pd.Series(
-       true_values
-   ).reset_index(drop=True)
-
-
-   cluster_values = pd.Series(
-       cluster_values
-   ).reset_index(drop=True)
-
-
-   predicted_values = np.empty(
-       len(cluster_values),
-       dtype=object
-   )
-
-
-
-
-   for cluster in np.unique(
-       cluster_values
-   ):
-
-
-       indexes = np.where(
-           cluster_values == cluster
-       )[0]
-
-
-
-
-       cluster_targets = (
-           true_values.iloc[
-               indexes
-           ]
-       )
-
-
-
-
-       majority = (
-           cluster_targets
-           .mode()
-       )
-
-
-
-
-       if len(majority) > 0:
-
-
-           predicted_values[
-               indexes
-           ] = majority.iloc[0]
-
-
-
-
-   return accuracy_score(
-       true_values,
-       predicted_values
-   )
-
-
-
-
-# ============================================================
-# 39. CALCULATE ACCURACY IF TARGET EXISTS
-# ============================================================
-
-
-if target_column is not None:
-
-
-   print("\n" + "=" * 75)
-   print("PLACEMENT CLUSTER MATCHING ACCURACY")
-   print("=" * 75)
-
-
-   target = data[
-       target_column
-   ].copy()
-
-
-
-
-   valid = target.notna()
-
-
-
-
-   target_valid = target[
-       valid
-   ].reset_index(drop=True)
-
-
-
-
-   km_labels_valid = pd.Series(
-       kmeans_labels,
-       index=data.index
-   )[valid].reset_index(drop=True)
-
-
-
-
-   pp_labels_valid = pd.Series(
-       kmeans_pp_labels,
-       index=data.index
-   )[valid].reset_index(drop=True)
-
-
-
-
-   km_accuracy = cluster_matching_accuracy(
-       target_valid,
-       km_labels_valid
-   )
-
-
-
-
-   pp_accuracy = cluster_matching_accuracy(
-       target_valid,
-       pp_labels_valid
-   )
-
-
-
-
-   print(
-       "Target column:",
-       target_column
-   )
-
-
-   print(
-       f"K-Means   : {km_accuracy * 100:.2f}%"
-   )
-
-
-   print(
-       f"K-Means++ : {pp_accuracy * 100:.2f}%"
-   )
-
-
-
-
-   accuracy_result = pd.DataFrame({
-
-
-       "Method": [
-           "K-Means",
-           "K-Means++"
-       ],
-
-
-       "Cluster_Matching_Accuracy": [
-           km_accuracy,
-           pp_accuracy
-       ],
-
-
-       "Accuracy_Percentage": [
-           km_accuracy * 100,
-           pp_accuracy * 100
-       ]
-
-
-   })
-
-
-
-
-   accuracy_result.to_csv(
-       os.path.join(
-           ACCURACY_FOLDER,
-           "placement_cluster_matching_accuracy.csv"
-       ),
-       index=False
-   )
-
-
-
-
-else:
-
-
-   print(
-       "\nNo Placement/Placed/Status/Target column "
-       "was found."
-   )
-
-
-   print(
-       "Accuracy is not calculated because K-Means "
-       "is an unsupervised algorithm."
-   )
-
-
-
-
-# ============================================================
-# 40. FINAL RESULTS
-# ============================================================
-
 
 print("\n" + "=" * 75)
 print("FINAL CLUSTERING RESULTS")
 print("=" * 75)
 
 
-
-
 print("\nK-MEANS")
 print("-" * 40)
 
-
 print(
-   "Best K:",
-   best_k_kmeans
+    "Best K:",
+    best_k_kmeans
 )
 
-
 print(
-   "Inertia:",
-   round(
-       kmeans_model.inertia_,
-       4
-   )
+    "Inertia:",
+    round(
+        kmeans_model.inertia_,
+        4
+    )
 )
 
-
 print(
-   "Silhouette:",
-   round(
-       km_silhouette,
-       4
-   )
+    "Silhouette:",
+    round(
+        km_silhouette,
+        4
+    )
 )
 
-
 print(
-   "Calinski-Harabasz:",
-   round(
-       km_calinski,
-       4
-   )
+    "Calinski-Harabasz:",
+    round(
+        km_calinski,
+        4
+    )
 )
 
-
 print(
-   "Davies-Bouldin:",
-   round(
-       km_davies,
-       4
-   )
+    "Davies-Bouldin:",
+    round(
+        km_davies,
+        4
+    )
 )
-
-
 
 
 print("\nK-MEANS++")
 print("-" * 40)
 
-
 print(
-   "Best K:",
-   best_k_kmeans_pp
+    "Best K:",
+    best_k_kmeans_pp
 )
 
-
 print(
-   "Inertia:",
-   round(
-       kmeans_pp_model.inertia_,
-       4
-   )
+    "Inertia:",
+    round(
+        kmeans_pp_model.inertia_,
+        4
+    )
 )
 
-
 print(
-   "Silhouette:",
-   round(
-       pp_silhouette,
-       4
-   )
+    "Silhouette:",
+    round(
+        pp_silhouette,
+        4
+    )
 )
 
-
 print(
-   "Calinski-Harabasz:",
-   round(
-       pp_calinski,
-       4
-   )
+    "Calinski-Harabasz:",
+    round(
+        pp_calinski,
+        4
+    )
 )
 
-
 print(
-   "Davies-Bouldin:",
-   round(
-       pp_davies,
-       4
-   )
+    "Davies-Bouldin:",
+    round(
+        pp_davies,
+        4
+    )
 )
-
-
 
 
 # ============================================================
-# 41. OUTPUT LOCATION
+# 45. OUTPUT LOCATIONS
 # ============================================================
-
 
 print("\n" + "=" * 75)
 print("OUTPUTS SAVED")
 print("=" * 75)
 
+print(
+    "\nMain folder:"
+)
 
 print(
-   "\nMain folder:"
+    OUTPUT_FOLDER
+)
+
+print(
+    "\nAccuracy:"
+)
+
+print(
+    ACCURACY_FOLDER
+)
+
+print(
+    "\nCharts:"
+)
+
+print(
+    CHARTS_FOLDER
+)
+
+print(
+    "\nCluster Results:"
+)
+
+print(
+    CLUSTER_RESULTS_FOLDER
+)
+
+print(
+    "\nElbow:"
+)
+
+print(
+    ELBOW_FOLDER
+)
+
+print(
+    "\nK-Means:"
+)
+
+print(
+    KMEANS_FOLDER
+)
+
+print(
+    "\nK-Means++:"
+)
+
+print(
+    KMEANS_PP_FOLDER
+)
+
+print(
+    "\nMetrics:"
+)
+
+print(
+    METRICS_FOLDER
+)
+
+print(
+    "\nPCA:"
+)
+
+print(
+    PCA_FOLDER
+)
+
+print(
+    "\nSilhouette:"
+)
+
+print(
+    SILHOUETTE_FOLDER
 )
 
 
-print(
-   OUTPUT_FOLDER
-)
-
-
-print(
-   "\nK-Means:"
-)
-
+# ============================================================
+# 46. FINAL SUCCESS MESSAGE
+# ============================================================
 
 print(
-   KMEANS_FOLDER
+    "\nOriginal/preprocessed input dataset "
+    "was NOT modified."
 )
-
 
 print(
-   "\nK-Means++:"
+    "\nPROGRAM COMPLETED SUCCESSFULLY."
 )
-
 
 print(
-   KMEANS_PP_FOLDER
+    "\nAll requested K-Means outputs were generated."
 )
 
-
-print(
-   "\nElbow:"
-)
-
-
-print(
-   ELBOW_FOLDER
-)
-
-
-print(
-   "\nSilhouette:"
-)
-
-
-print(
-   SILHOUETTE_FOLDER
-)
-
-
-print(
-   "\nAccuracy:"
-)
-
-
-print(
-   ACCURACY_FOLDER
-)
-
-
-
-
-print(
-   "\nOriginal/preprocessed input dataset was NOT modified."
-)
-
-
-print(
-   "\nPROGRAM COMPLETED SUCCESSFULLY."
-)
+# ============================================================
+# END
+# ============================================================
